@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'ds_ros2_drone'
+package_name = 'ds_ros2_drone_pkg'
 
 setup(
     name=package_name,
@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        	'px4_offboard_control = ds_ros2_drone.px4_offboard_control:main',
+        	'px4_offboard_control = ds_ros2_drone_pkg.px4_offboard_control:main',
         ],
     },
 )
