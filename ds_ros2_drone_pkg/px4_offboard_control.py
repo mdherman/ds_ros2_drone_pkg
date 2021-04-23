@@ -51,16 +51,16 @@ class PX4OffboardControl(Node):
 
 	# Spinning function
 	def timer_callback(self):
-		if self.arm_flag == True && self.armed == False:
+		if self.arm_flag == True and self.armed == False:
 			self.arm()
 			self.publish_offboard_control_mode() # Control modes..
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
 			self.armed = True
-		elif self.arm_flag == False && self.armed == True:
+		elif self.arm_flag == False and self.armed == True:
 			self.disarm()
 			self.armed = False
 			
-		if self.armed == True && self.offboard_control == True:
+		if self.armed == True and self.offboard_control == True:
 			self.publish_offboard_control_mode()
 			self.publish_trajectory_setpoint
 			
