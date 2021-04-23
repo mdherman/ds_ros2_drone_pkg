@@ -20,8 +20,8 @@ class PX4OffboardControl(Node):
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
-		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpoint, "use_drone_setpoint", self.fetch_trajectory_setpoint, 10)
-		self.activate_drone = self.create_subscription(DroneControl, "use_drone_control_01", self.drone_control, 10)
+		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpoint, "use_drone_setpoint_01", self.fetch_trajectory_setpoint, 10)
+		self.control = self.create_subscription(DroneControl, "use_drone_control_01", self.drone_control, 10)
 
 		# Setting member and locale variables
 		self.x = 0.0
@@ -30,13 +30,9 @@ class PX4OffboardControl(Node):
 		self.yaw = 0.0
 		self.timestamp = 0
 		self.arm_flag = False
+		self.armed = False
 		self.offboard_control = False
 		timer_period = 0.1
-
-		# Getting ready to fly
-		#self.arm() # Arming
-		#self.publish_offboard_control_mode() # Control modes..
-		#self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
 
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -55,12 +51,21 @@ class PX4OffboardControl(Node):
 
 	# Spinning function
 	def timer_callback(self):
-		#self.publish_offboard_control_mode()
-		#self.publish_trajectory_setpoint
-		if self.arm_flag == True:
+		if self.arm_flag == True && self.armed == False:
 			self.arm()
-		else:
+			self.publish_offboard_control_mode() # Control modes..
+			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+			self.armed = True
+		elif self.arm_flag == False && self.armed == True:
 			self.disarm()
+			self.armed = False
+			
+		if self.armed == True && self.offboard_control == True:
+			self.publish_offboard_control_mode()
+			self.publish_trajectory_setpoint
+			
+			
+		
 
 	# Fetch timestamp
 	def timesync(self, px4_time):
