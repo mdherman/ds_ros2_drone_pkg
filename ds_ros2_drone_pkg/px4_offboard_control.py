@@ -4,6 +4,7 @@ from px4_msgs.msg import Timesync
 from px4_msgs.msg import VehicleCommand
 from px4_msgs.msg import VehicleControlMode
 from ds_ros2_msgs.msg import DroneControl
+from ds_ros2_msgs.msg import TrajectorySetpoint as TrajectorySetpointDS
 
 import rclpy
 from rclpy.node import Node
@@ -20,7 +21,7 @@ class PX4OffboardControl(Node):
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
-		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpoint, "use_drone_setpoint_01", self.fetch_trajectory_setpoint, 10)
+		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint_01", self.fetch_trajectory_setpoint, 10)
 		self.control = self.create_subscription(DroneControl, "use_drone_control_01", self.drone_control, 10)
 
 		# Setting member and locale variables
