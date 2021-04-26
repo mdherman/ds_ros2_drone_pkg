@@ -26,14 +26,21 @@ class PX4OffboardControl(Node):
 		# Setting member and locale variables
 		self.x = 0.0
 		self.y = 0.0
-		self.z = 0.0
+		self.z = -2.0
 		self.yaw = 0.0
 		self.timestamp = 0
 		self.arm_flag = False
 		self.armed = False
 		self.offboard_control = False
+		self.launch_flag = False
 		timer_period = 0.1
+		self.offboard_setpoint_counter_ = 0
 
+
+
+		self.arm()
+		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+			
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -41,7 +48,8 @@ class PX4OffboardControl(Node):
 	def drone_control(self, control_msg):
 		self.arm_flag = control_msg.arm
 		self.offboard_control = control_msg.offboard_control
-
+		self.launch_flag = control_msg.launch
+	
 	# Fetch setpoints
 	def fetch_trajectory_setpoint(self, use_msg):
 		self.x = use_msg.x
@@ -51,19 +59,15 @@ class PX4OffboardControl(Node):
 
 	# Spinning function
 	def timer_callback(self):
-		if self.arm_flag == True and self.armed == False:
+		if self.offboard_setpoint_counter_ == 10:
 			self.arm()
-			self.publish_offboard_control_mode() # Control modes..
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
-			self.armed = True
-		elif self.arm_flag == False and self.armed == True:
-			self.disarm()
-			self.armed = False
+		
+		self.publish_offboard_control_mode()
+		self.publish_trajectory_setpoint()
 			
-		if self.armed == True and self.offboard_control == True:
-			self.publish_offboard_control_mode()
-			self.publish_trajectory_setpoint
-			
+		if self.offboard_setpoint_counter_ < 11:
+			self.offboard_setpoint_counter_ += 1
 			
 		
 
