@@ -35,12 +35,7 @@ class PX4OffboardControl(Node):
 		self.launch_flag = False
 		timer_period = 0.1
 		self.offboard_setpoint_counter_ = 0
-
-
-
-		self.arm()
-		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
-			
+	
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -59,17 +54,16 @@ class PX4OffboardControl(Node):
 
 	# Spinning function
 	def timer_callback(self):
-		if self.offboard_setpoint_counter_ == 10:
-			self.arm()
-			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
-		
-		self.publish_offboard_control_mode()
-		self.publish_trajectory_setpoint()
-			
-		if self.offboard_setpoint_counter_ < 11:
-			self.offboard_setpoint_counter_ += 1
-			
-		
+		if self.launch_flag == True:
+			if self.offboard_setpoint_counter_ == 10:
+				self.arm()
+				self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+
+			self.publish_offboard_control_mode()
+			self.publish_trajectory_setpoint()
+
+			if self.offboard_setpoint_counter_ < 11:
+				self.offboard_setpoint_counter_ += 1	
 
 	# Fetch timestamp
 	def timesync(self, px4_time):
