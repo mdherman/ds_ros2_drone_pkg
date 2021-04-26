@@ -3,6 +3,7 @@ from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import Timesync
 from px4_msgs.msg import VehicleCommand
 from px4_msgs.msg import VehicleControlMode
+
 from ds_ros2_msgs.msg import DroneControl
 from ds_ros2_msgs.msg import TrajectorySetpoint as TrajectorySetpointDS
 
@@ -21,31 +22,29 @@ class PX4OffboardControl(Node):
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
-		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint_01", self.fetch_trajectory_setpoint, 10)
-		self.control = self.create_subscription(DroneControl, "use_drone_control_01", self.drone_control, 10)
+		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint", self.fetch_trajectory_setpoint, 10)
+		self.control = self.create_subscription(DroneControl, "use_drone_control", self.drone_control, 10)
 
 		# Setting member and locale variables
 		self.x = 0.0
 		self.y = 0.0
-		self.z = -2.0
+		self.z = 0.0
 		self.yaw = 0.0
 		self.timestamp = 0
 		self.arm_flag = False
-		self.armed = False
-		self.offboard_control = False
 		self.launch_flag = False
-		timer_period = 0.1
+		self.disarmed = False
 		self.offboard_setpoint_counter_ = 0
-	
+		timer_period = 0.1
+
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 
-	# Activating topics
+	# System control
 	def drone_control(self, control_msg):
 		self.arm_flag = control_msg.arm
-		self.offboard_control = control_msg.offboard_control
 		self.launch_flag = control_msg.launch
-	
+
 	# Fetch setpoints
 	def fetch_trajectory_setpoint(self, use_msg):
 		self.x = use_msg.x
@@ -55,16 +54,37 @@ class PX4OffboardControl(Node):
 
 	# Spinning function
 	def timer_callback(self):
-		if self.launch_flag == True:
+
+		# This flies the drone
+		if self.arm_flag == True:
+			self.disarmed = False
+
 			if self.offboard_setpoint_counter_ == 10:
 				self.arm()
 				self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
 
-			self.publish_offboard_control_mode()
-			self.publish_trajectory_setpoint()
+			if self.launch_flag == True:
+				self.publish_offboard_control_mode()
+				self.publish_trajectory_setpoint()
+
+
+			elif self.launch_flag == False:
+				self.z = 0.0
+
+				self.publish_offboard_control_mode()
+				self.publish_trajectory_setpoint()
 
 			if self.offboard_setpoint_counter_ < 11:
-				self.offboard_setpoint_counter_ += 1	
+				self.offboard_setpoint_counter_ += 1
+
+
+		# This disarms the drone
+		elif self.arm_flag == False and self.disarmed == False:
+			self.disarm()
+			self.disarmed = True
+			self.launch_flag = False
+			self.offboard_setpoint_counter_ = 0
+
 
 	# Fetch timestamp
 	def timesync(self, px4_time):
