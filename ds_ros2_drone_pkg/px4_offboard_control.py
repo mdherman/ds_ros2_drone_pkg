@@ -44,7 +44,7 @@ class PX4OffboardControl(Node):
 			# Flags
 		self.arm_flag = False
 		self.launch_flag = False
-		self.disarmed = False
+		self.disarmed = True
 		self.switch_px = False
 		self.px_status = False
 
@@ -77,35 +77,32 @@ class PX4OffboardControl(Node):
 	# Spinning function
 	def timer_callback(self):
 
-		# This flies the drone
-		if self.arm_flag == True:
-			self.disarmed = False
 
-			if self.offboard_setpoint_counter_ == 10:
-				self.arm()
-				self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+		# This arms the drone
+		if self.arm_flag == True and self.disarmed == True:
+			self.arm()
+			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+			self.disarmed == False
 
-			if self.launch_flag == True:
-				self.publish_offboard_control_mode()
-				self.publish_trajectory_setpoint()
+		# This publishes TrajectorySetpoint
+		self.publish_offboard_control_mode()
+		self.publish_trajectory_setpoint()
 
-
-			elif self.launch_flag == False:
-				self.z = 0.0
-
-				self.publish_offboard_control_mode()
-				self.publish_trajectory_setpoint()
-
-			if self.offboard_setpoint_counter_ < 11:
-				self.offboard_setpoint_counter_ += 1
+		# This launches the drone
+		if self.launch_flag == False:
+			#self.z = 0.0
+			self.vz = 0.0
+		elif self.launch_flag == True:
+			#self.z = -5.0
+			self.vz = 1.0
 
 		# This disarms the drone
-		elif self.arm_flag == False and self.disarmed == False:
+		if self.arm_flag == False and self.disarmed == False:
 			self.disarm()
 			self.disarmed = True
 			self.launch_flag = False
-			self.offboard_setpoint_counter_ = 0
 
+		# This switches the pixhawk
 		if self.switch_px == True and self.px_status == False:
 			os.system("sh -c 'echo '1' > /sys/class/gpio/gpio27/value")
 			self.px_status = True
@@ -117,7 +114,6 @@ class PX4OffboardControl(Node):
 	# Fetch timestamp
 	def timesync(self, px4_time):
 		self.timestamp = px4_time.timestamp
-
 
 	# Send a command to Arm the vehicle
 	def arm(self):
