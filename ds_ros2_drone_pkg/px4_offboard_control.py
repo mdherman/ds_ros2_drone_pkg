@@ -9,6 +9,7 @@ from ds_ros2_msgs.msg import TrajectorySetpoint as TrajectorySetpointDS
 
 import rclpy
 from rclpy.node import Node
+import OS
 
 
 class PX4OffboardControl(Node):
@@ -26,14 +27,28 @@ class PX4OffboardControl(Node):
 		self.control = self.create_subscription(DroneControl, "use_drone_control", self.drone_control, 10)
 
 		# Setting member and locale variables
+			# TrajectorySetpoint
 		self.x = 0.0
 		self.y = 0.0
 		self.z = 0.0
 		self.yaw = 0.0
+		self.yawspeed = 0.0
+		self.vx = 0.0
+		self.vy = 0.0
+		self.vz = 0.0
+		self.acceleration = [0.0, 0.0, 0.0]
+		self.jerk = [0.0, 0.0, 0.0]
+		self.thrust = [0.0, 0.0, 0.0]
 		self.timestamp = 0
+
+			# Flags
 		self.arm_flag = False
 		self.launch_flag = False
 		self.disarmed = False
+		self.switch_px = False
+		self.px_status = False
+
+			# For timer
 		self.offboard_setpoint_counter_ = 0
 		timer_period = 0.1
 
@@ -44,6 +59,7 @@ class PX4OffboardControl(Node):
 	def drone_control(self, control_msg):
 		self.arm_flag = control_msg.arm
 		self.launch_flag = control_msg.launch
+		self.switch_px = control_msg.switch_px
 
 	# Fetch setpoints
 	def fetch_trajectory_setpoint(self, use_msg):
@@ -51,6 +67,12 @@ class PX4OffboardControl(Node):
 		self.y = use_msg.y
 		self.z = use_msg.z
 		self.yaw = use_msg.yaw
+		self.vx = use_msg.vx
+		self.vy = use_msg.vx
+		self.vz = use_msg.vx
+		self.acceleration = use_msg.acceleration
+		self.jerk = use_msg.jerk
+		self.thrust = = use_msg.thrust
 
 	# Spinning function
 	def timer_callback(self):
@@ -77,13 +99,19 @@ class PX4OffboardControl(Node):
 			if self.offboard_setpoint_counter_ < 11:
 				self.offboard_setpoint_counter_ += 1
 
-
 		# This disarms the drone
 		elif self.arm_flag == False and self.disarmed == False:
 			self.disarm()
 			self.disarmed = True
 			self.launch_flag = False
 			self.offboard_setpoint_counter_ = 0
+
+		if self.switch_px == True and self.px_status == False:
+			os.system("sh -c 'echo '1' > /sys/class/gpio/gpio27/value")
+			self.px_status = True
+		elif self.switch_px == False and self.px_status == True:
+			os.system("sh -c 'echo '0' > /sys/class/gpio/gpio27/value")
+			self.px_status = False
 
 
 	# Fetch timestamp
@@ -107,7 +135,7 @@ class PX4OffboardControl(Node):
 
 		msg.timestamp = self.timestamp
 		msg.position = True
-		msg.velocity = False
+		msg.velocity = True
 		msg.acceleration = False
 		msg.attitude = False
 		msg.body_rate = False
@@ -123,6 +151,12 @@ class PX4OffboardControl(Node):
 		msg.y = self.y
 		msg.z = self.z
 		msg.yaw = self.yaw
+		msg.vx = self.vx
+		msg.vy = self.vy
+		msg.vz = self.vz
+		msg.acceleration = self.acceleration
+		msg.jerk = self.jerk
+		msg.thrust = self.thrust
 
 		self.trajectory_setpoint_publisher_.publish(msg)
 
