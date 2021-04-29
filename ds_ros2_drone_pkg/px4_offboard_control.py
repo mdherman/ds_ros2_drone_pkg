@@ -9,7 +9,7 @@ from ds_ros2_msgs.msg import TrajectorySetpoint as TrajectorySetpointDS
 
 import rclpy
 from rclpy.node import Node
-import OS
+import os
 
 
 class PX4OffboardControl(Node):
@@ -43,14 +43,14 @@ class PX4OffboardControl(Node):
 
 			# Flags
 		self.arm_flag = False
-		self.launch_flag = False
+		self.launch_flag = True
 		self.disarmed = True
 		self.switch_px = False
 		self.px_status = False
 
 			# For timer
 		self.offboard_setpoint_counter_ = 0
-		timer_period = 0.1
+		timer_period = 0.05
 
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -68,11 +68,11 @@ class PX4OffboardControl(Node):
 		self.z = use_msg.z
 		self.yaw = use_msg.yaw
 		self.vx = use_msg.vx
-		self.vy = use_msg.vx
-		self.vz = use_msg.vx
+		self.vy = use_msg.vy
+		self.vz = use_msg.vz
 		self.acceleration = use_msg.acceleration
 		self.jerk = use_msg.jerk
-		self.thrust = = use_msg.thrust
+		self.thrust = use_msg.thrust
 
 	# Spinning function
 	def timer_callback(self):
@@ -82,7 +82,7 @@ class PX4OffboardControl(Node):
 		if self.arm_flag == True and self.disarmed == True:
 			self.arm()
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
-			self.disarmed == False
+			self.disarmed = False
 
 		# This publishes TrajectorySetpoint
 		self.publish_offboard_control_mode()
@@ -92,15 +92,15 @@ class PX4OffboardControl(Node):
 		if self.launch_flag == False:
 			self.z = 0.0
 			self.vz = 0.0
-		elif self.launch_flag == True:
+		#elif self.launch_flag == True:
 			#self.z = -5.0
-			self.vz = 1.0
+			#self.vz = 1.0
 
 		# This disarms the drone
 		if self.arm_flag == False and self.disarmed == False:
 			self.disarm()
 			self.disarmed = True
-			self.launch_flag = False
+			self.launch_flag = True
 
 		# This switches the pixhawk
 		if self.switch_px == True and self.px_status == False:
