@@ -90,7 +90,7 @@ class PX4OffboardControl(Node):
 
 		# This launches the drone
 		if self.launch_flag == False:
-			#self.z = 0.0
+			self.z = 0.0
 			self.vz = 0.0
 		elif self.launch_flag == True:
 			#self.z = -5.0
