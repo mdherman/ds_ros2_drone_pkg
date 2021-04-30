@@ -104,10 +104,10 @@ class PX4OffboardControl(Node):
 
 		# This switches the pixhawk
 		if self.switch_px == True and self.px_status == False:
-			os.system("sh -c 'echo '1' > /sys/class/gpio/gpio27/value")
+			os.system("sudo sh -c 'echo '1' > /sys/class/gpio/gpio27/value'")
 			self.px_status = True
 		elif self.switch_px == False and self.px_status == True:
-			os.system("sh -c 'echo '0' > /sys/class/gpio/gpio27/value")
+			os.system("sudo sh -c 'echo '0' > /sys/class/gpio/gpio27/value'")
 			self.px_status = False
 
 
