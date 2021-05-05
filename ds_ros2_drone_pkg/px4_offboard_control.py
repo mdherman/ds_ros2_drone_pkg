@@ -3,6 +3,7 @@ from px4_msgs.msg import TrajectorySetpoint
 from px4_msgs.msg import Timesync
 from px4_msgs.msg import VehicleCommand
 from px4_msgs.msg import VehicleControlMode
+from px4_msgs.msg import VehicleOdometry
 
 from ds_ros2_msgs.msg import DroneControl
 from ds_ros2_msgs.msg import TrajectorySetpoint as TrajectorySetpointDS
@@ -20,6 +21,7 @@ class PX4OffboardControl(Node):
 		self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode, "OffboardControlMode_PubSubTopic", 10)
 		self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint, "TrajectorySetpoint_PubSubTopic", 10)
 		self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand, "VehicleCommand_PubSubTopic", 10)
+		self.odometry_publisher_ = self.create_publisher(VehicleOdometry, "VehicleOdometry_PubSubTopic", 10)
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
@@ -51,6 +53,25 @@ class PX4OffboardControl(Node):
 			# For timer
 		self.offboard_setpoint_counter_ = 0
 		timer_period = 0.05
+
+		# Odometry message
+		self.odom_msg = VehicleOdometry()
+		self.odom_msgs.local_frame = 0
+		self.odom_msg.x = 0.0
+		self.odom_msg.y = 0.0
+		self.odom_msg.z = 0.0
+		self.odom_msg.q = [0.0, 0.0, 0.0, 0.0]
+		self.odom_msg.q_offset = [0.0, 0.0, 0.0, 0.0]
+		self.odom_msg.pose_covariance = [float("NaN"),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,float("NaN"),0.0,0.0,0.0,0.0,0.0]
+		self.odom_msg.velocity_frame = 0.0
+		self.odom_msg.vx = float("NaN")
+		self.odom_msg.vy = float("NaN")
+		self.odom_msg.vz = float("NaN")
+		self.odom_msg.rollspeed = float("NaN")
+		self.odom_msg.pitchspeed = float("NaN")
+		self.odom_msg.yawspeed = float("NaN")
+		self.odom_msg.velocity_covariance = [float("NaN"),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,float("NaN"),0.0,0.0,0.0,0.0,0.0]
+
 
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -109,6 +130,11 @@ class PX4OffboardControl(Node):
 		elif self.switch_px == False and self.px_status == True:
 			os.system("sudo sh -c 'echo '0' > /sys/class/gpio/gpio27/value'")
 			self.px_status = False
+
+		# test
+		self.odom_msg.timestamp = self.timestamp
+		self.odom_msgs.timestamp_sample = self.timestamp
+		self.odometry_publisher_(self.odom_msg)
 
 
 	# Fetch timestamp
