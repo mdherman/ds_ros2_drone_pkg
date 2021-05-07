@@ -43,9 +43,9 @@ class PX4OffboardControl(Node):
 		self.timestamp = 0
 
 			# Flags
-		self.arm_flag = False
-		self.land_flag = True
-		self.disarmed = True
+		self.arm = False
+		self.land = True
+		self.armed = False
 		self.switch_px = False
 		self.px_status = False
 
@@ -58,8 +58,8 @@ class PX4OffboardControl(Node):
 
 	# System control
 	def drone_control(self, control_msg):
-		self.arm_flag = control_msg.arm
-		self.land_flag = control_msg.land
+		self.arm = control_msg.arm
+		self.land = control_msg.land
 		self.switch_px = control_msg.switch_px
 
 	# Fetch setpoints
@@ -80,30 +80,25 @@ class PX4OffboardControl(Node):
 
 
 		# This arms the drone
-		if self.arm_flag == True and self.disarmed == True:
+		if self.arm == True and self.armed == False:
 			self.arm()
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
-			self.disarmed = False
+			self.armed = True
+			
+		# This disarms the drone
+		if self.arm == False and self.armed == True:
+			self.disarm()
+			self.armed = False
 
 		# This publishes TrajectorySetpoint
 		self.publish_offboard_control_mode()
 		self.publish_trajectory_setpoint()
 
-		# This launches the drone
-		if self.land_flag == True:
+		# This lands the drone
+		if self.land == True:
 			self.z = 0.0
 			self.vz = 0.0
-
-		# This disarms the drone
-		if self.arm_flag == False and self.disarmed == False:
-			if self.z == 0.0 and self.vz == 0.0:
-				self.disarm()
-				self.disarmed = True
-			else:
-				self.z = 0.0
-				self.vz = 0.0
-
-
+			
 		# This switches the pixhawk
 		if self.switch_px == True and self.px_status == False:
 			os.system("sudo sh -c 'echo '1' > /sys/class/gpio/gpio27/value'")
