@@ -21,7 +21,6 @@ class PX4OffboardControl(Node):
 		self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode, "OffboardControlMode_PubSubTopic", 10)
 		self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint, "TrajectorySetpoint_PubSubTopic", 10)
 		self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand, "VehicleCommand_PubSubTopic", 10)
-		self.odometry_publisher_ = self.create_publisher(VehicleOdometry, "VehicleOdometry_PubSubTopic", 10)
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
@@ -45,7 +44,7 @@ class PX4OffboardControl(Node):
 
 			# Flags
 		self.arm_flag = False
-		self.launch_flag = True
+		self.land_flag = True
 		self.disarmed = True
 		self.switch_px = False
 		self.px_status = False
@@ -53,33 +52,14 @@ class PX4OffboardControl(Node):
 			# For timer
 		self.offboard_setpoint_counter_ = 0
 		timer_period = 0.05
-
-		# Odometry message
-		self.odom_msg = VehicleOdometry()
-		self.odom_msgs.local_frame = 0
-		self.odom_msg.x = 0.0
-		self.odom_msg.y = 0.0
-		self.odom_msg.z = 0.0
-		self.odom_msg.q = [0.0, 0.0, 0.0, 0.0]
-		self.odom_msg.q_offset = [0.0, 0.0, 0.0, 0.0]
-		self.odom_msg.pose_covariance = [float("NaN"),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,float("NaN"),0.0,0.0,0.0,0.0,0.0]
-		self.odom_msg.velocity_frame = 0.0
-		self.odom_msg.vx = float("NaN")
-		self.odom_msg.vy = float("NaN")
-		self.odom_msg.vz = float("NaN")
-		self.odom_msg.rollspeed = float("NaN")
-		self.odom_msg.pitchspeed = float("NaN")
-		self.odom_msg.yawspeed = float("NaN")
-		self.odom_msg.velocity_covariance = [float("NaN"),0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,float("NaN"),0.0,0.0,0.0,0.0,0.0]
-
-
+		
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 
 	# System control
 	def drone_control(self, control_msg):
 		self.arm_flag = control_msg.arm
-		self.launch_flag = control_msg.launch
+		self.land_flag = control_msg.launch
 		self.switch_px = control_msg.switch_px
 
 	# Fetch setpoints
@@ -110,18 +90,19 @@ class PX4OffboardControl(Node):
 		self.publish_trajectory_setpoint()
 
 		# This launches the drone
-		if self.launch_flag == False:
+		if self.land_flag == True:
 			self.z = 0.0
 			self.vz = 0.0
-		#elif self.launch_flag == True:
-			#self.z = -5.0
-			#self.vz = 1.0
 
 		# This disarms the drone
 		if self.arm_flag == False and self.disarmed == False:
-			self.disarm()
-			self.disarmed = True
-			self.launch_flag = True
+			if self.z == 0.0 and self.vz == 0.0:
+				self.disarm()
+				self.disarmed = True
+			else:
+				self.z = 0.0
+				self.vz = 0.0
+
 
 		# This switches the pixhawk
 		if self.switch_px == True and self.px_status == False:
@@ -130,12 +111,6 @@ class PX4OffboardControl(Node):
 		elif self.switch_px == False and self.px_status == True:
 			os.system("sudo sh -c 'echo '0' > /sys/class/gpio/gpio27/value'")
 			self.px_status = False
-
-		# test
-		self.odom_msg.timestamp = self.timestamp
-		self.odom_msgs.timestamp_sample = self.timestamp
-		self.odometry_publisher_(self.odom_msg)
-
 
 	# Fetch timestamp
 	def timesync(self, px4_time):
