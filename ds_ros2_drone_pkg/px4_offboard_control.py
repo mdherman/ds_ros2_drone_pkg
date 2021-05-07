@@ -81,13 +81,13 @@ class PX4OffboardControl(Node):
 
 		# This arms the drone
 		if self.arm == True and self.armed == False:
-			self.arm()
+			self.arm_vehicle()
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
 			self.armed = True
 			
 		# This disarms the drone
 		if self.arm == False and self.armed == True:
-			self.disarm()
+			self.disarm_vehicle()
 			self.armed = False
 
 		# This publishes TrajectorySetpoint
@@ -112,12 +112,12 @@ class PX4OffboardControl(Node):
 		self.timestamp = px4_time.timestamp
 
 	# Send a command to Arm the vehicle
-	def arm(self):
+	def arm_vehicle(self):
 		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 1.0, 0.0)
 		self.get_logger().info("Arm command send")
 
 	# Send a command to Disarm the vehicle
-	def disarm(self):
+	def disarm_vehicle(self):
 		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, 0.0, 0.0)
 		self.get_logger().info("Disarm command send")
 
