@@ -59,7 +59,7 @@ class PX4OffboardControl(Node):
 	# System control
 	def drone_control(self, control_msg):
 		self.arm_flag = control_msg.arm
-		self.land_flag = control_msg.launch
+		self.land_flag = control_msg.land
 		self.switch_px = control_msg.switch_px
 
 	# Fetch setpoints
