@@ -24,8 +24,8 @@ class PX4OffboardControl(Node):
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
-		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint", self.fetch_trajectory_setpoint, 10)
-		self.control = self.create_subscription(DroneControl, "use_drone_control", self.drone_control, 10)
+		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_01_drone_setpoint", self.fetch_trajectory_setpoint, 10)
+		self.control = self.create_subscription(DroneControl, "use_01_drone_control", self.drone_control, 10)
 
 		# Setting member and locale variables
 			# TrajectorySetpoint
@@ -45,6 +45,7 @@ class PX4OffboardControl(Node):
 			# Flags
 		self.arm = False
 		self.land = True
+		self.launch = False
 		self.armed = False
 		self.switch_px = False
 		self.px_status = False
@@ -52,7 +53,7 @@ class PX4OffboardControl(Node):
 			# For timer
 		self.offboard_setpoint_counter_ = 0
 		timer_period = 0.05
-		
+
 		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -61,6 +62,7 @@ class PX4OffboardControl(Node):
 		self.arm = control_msg.arm
 		self.land = control_msg.land
 		self.switch_px = control_msg.switch_px
+		self.launch = control_msg.launch
 
 	# Fetch setpoints
 	def fetch_trajectory_setpoint(self, use_msg):
@@ -77,28 +79,28 @@ class PX4OffboardControl(Node):
 
 	# Spinning function
 	def timer_callback(self):
-
-
 		# This arms the drone
 		if self.arm == True and self.armed == False:
 			self.arm_vehicle()
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
 			self.armed = True
-			
+
 		# This disarms the drone
 		if self.arm == False and self.armed == True:
 			self.disarm_vehicle()
 			self.armed = False
+			self.launch = False
 
-		# This publishes TrajectorySetpoint
-		self.publish_offboard_control_mode()
+		if self.launch == True:
+			self.publish_offboard_control_mode()
+			
 		self.publish_trajectory_setpoint()
 
 		# This lands the drone
 		if self.land == True:
 			self.z = 0.0
 			self.vz = 0.0
-			
+
 		# This switches the pixhawk
 		if self.switch_px == True and self.px_status == False:
 			os.system("sudo sh -c 'echo '1' > /sys/class/gpio/gpio27/value'")
