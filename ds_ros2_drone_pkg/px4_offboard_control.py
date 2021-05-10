@@ -16,7 +16,6 @@ import os
 class PX4OffboardControl(Node):
 	def __init__(self):
 		super().__init__("px4_offboard_control")
-
 		# Creating publishers
 		self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode, "OffboardControlMode_PubSubTopic", 10)
 		self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint, "TrajectorySetpoint_PubSubTopic", 10)
@@ -24,8 +23,8 @@ class PX4OffboardControl(Node):
 
 		# Creating subscribers
 		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
-		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_01_drone_setpoint", self.fetch_trajectory_setpoint, 10)
-		self.control = self.create_subscription(DroneControl, "use_01_drone_control", self.drone_control, 10)
+		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint", self.fetch_trajectory_setpoint, 10)
+		self.control = self.create_subscription(DroneControl, "use_drone_control", self.drone_control, 10)
 
 		# Setting member and locale variables
 			# TrajectorySetpoint
@@ -93,7 +92,7 @@ class PX4OffboardControl(Node):
 
 		if self.launch == True:
 			self.publish_offboard_control_mode()
-			
+
 		self.publish_trajectory_setpoint()
 
 		# This lands the drone
