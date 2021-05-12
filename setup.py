@@ -20,7 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        	'px4_offboard_control = ds_ros2_drone_pkg.px4_offboard_control:main',
+        	'drone_offboard_control = ds_ros2_drone_pkg.drone_offboard_control:main',
         ],
     },
 )

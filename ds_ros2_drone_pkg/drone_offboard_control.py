@@ -15,102 +15,92 @@ import os
 
 class PX4OffboardControl(Node):
 	def __init__(self):
-		super().__init__("px4_offboard_control")
+		# Init node with name
+		super().__init__("drone_offboard_control")
+
 		# Creating publishers
 		self.offboard_control_mode_publisher_ = self.create_publisher(OffboardControlMode, "OffboardControlMode_PubSubTopic", 10)
 		self.trajectory_setpoint_publisher_ = self.create_publisher(TrajectorySetpoint, "TrajectorySetpoint_PubSubTopic", 10)
 		self.vehicle_command_publisher_ = self.create_publisher(VehicleCommand, "VehicleCommand_PubSubTopic", 10)
 
 		# Creating subscribers
-		self.timesync_sub_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
-		self.use_drone_setpoint_sub = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint", self.fetch_trajectory_setpoint, 10)
-		self.control = self.create_subscription(DroneControl, "use_drone_control", self.drone_control, 10)
+		self.timesync_subcriber_ = self.create_subscription(Timesync, "Timesync_PubSubTopic", self.timesync, 10)
+		self.use_drone_setpoint_subscriber_ = self.create_subscription(TrajectorySetpointDS, "use_drone_setpoint", self.fetch_trajectory_setpoint, 10)
+		self.control_subscriber_ = self.create_subscription(DroneControl, "use_drone_control", self.drone_control, 10)
 
-		# Setting member and locale variables
-			# TrajectorySetpoint
-		self.x = 0.0
-		self.y = 0.0
-		self.z = 0.0
-		self.yaw = 0.0
-		self.yawspeed = 0.0
-		self.vx = 0.0
-		self.vy = 0.0
-		self.vz = 0.0
-		self.acceleration = [0.0, 0.0, 0.0]
-		self.jerk = [0.0, 0.0, 0.0]
-		self.thrust = [0.0, 0.0, 0.0]
-		self.timestamp = 0
+		# Member trajectory setpoint message
+		self.trajectory_msg_ = TrajectorySetpoint()
 
-			# Flags
-		self.arm = False
-		self.land = True
-		self.launch = False
-		self.armed = False
-		self.switch_px = False
-		self.px_status = False
+		# Member variables
+		self.timestamp_ = 0
 
-			# For timer
-		self.offboard_setpoint_counter_ = 0
+		# Flags
+		self.arm_ = False
+		self.land_ = True
+		self.launch_ = False
+		self.armed_ = False
+		self.switch_px_ = False
+		self.px_status_ = False
+
+		# Timer running at 20 Hz
 		timer_period = 0.05
-
-		# Running
 		self.timer = self.create_timer(timer_period, self.timer_callback)
-
-	# System control
-	def drone_control(self, control_msg):
-		self.arm = control_msg.arm
-		self.land = control_msg.land
-		self.switch_px = control_msg.switch_px
-		self.launch = control_msg.launch
-
-	# Fetch setpoints
-	def fetch_trajectory_setpoint(self, use_msg):
-		self.x = use_msg.x
-		self.y = use_msg.y
-		self.z = use_msg.z
-		self.yaw = use_msg.yaw
-		self.vx = use_msg.vx
-		self.vy = use_msg.vy
-		self.vz = use_msg.vz
-		self.acceleration = use_msg.acceleration
-		self.jerk = use_msg.jerk
-		self.thrust = use_msg.thrust
 
 	# Spinning function
 	def timer_callback(self):
 		# This arms the drone
-		if self.arm == True and self.armed == False:
+		if self.arm_ == True and self.armed_ == False:
 			self.arm_vehicle()
 			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
-			self.armed = True
+			self.armed_ = True
 
 		# This disarms the drone
-		if self.arm == False and self.armed == True:
+		if self.arm_ == False and self.armed_ == True:
 			self.disarm_vehicle()
-			self.armed = False
-			self.launch = False
+			self.armed_ = False
+			self.launch_ = False
 
-		if self.launch == True:
+		if self.launch_ == True:
 			self.publish_offboard_control_mode()
 
-		self.publish_trajectory_setpoint()
+		self.trajectory_setpoint_publisher_.publish(self.trajectory_msg_)
 
 		# This lands the drone
-		if self.land == True:
-			self.z = 0.0
-			self.vz = 0.0
+		if self.land_ == True:
+			self.trajectory_msg_.z = 0.0
+			self.trajectory_msg_.vz = 0.0
 
 		# This switches the pixhawk
-		if self.switch_px == True and self.px_status == False:
+		if self.switch_px_ == True and self.px_status_ == False:
 			os.system("sudo sh -c 'echo '1' > /sys/class/gpio/gpio27/value'")
-			self.px_status = True
-		elif self.switch_px == False and self.px_status == True:
+			self.px_status_ = True
+		elif self.switch_px_ == False and self.px_status_ == True:
 			os.system("sudo sh -c 'echo '0' > /sys/class/gpio/gpio27/value'")
-			self.px_status = False
+			self.px_status_ = False
+
+	# System control
+	def drone_control(self, control_msg):
+		self.arm_ = control_msg.arm
+		self.land_land = control_msg.land
+		self.switch_px_ = control_msg.switch_px
+		self.launch_ = control_msg.launch
+
+	# Fetch setpoints
+	def fetch_trajectory_setpoint(self, use_msg):
+		self.trajectory_msg_.x = use_msg.x
+		self.trajectory_msg_.y = use_msg.y
+		self.trajectory_msg_.z = use_msg.z
+		self.trajectory_msg_.yaw = use_msg.yaw
+		self.trajectory_msg_.vx = use_msg.vx
+		self.trajectory_msg_.vy = use_msg.vy
+		self.trajectory_msg_.vz = use_msg.vz
+		self.trajectory_msg_.acceleration = use_msg.acceleration
+		self.trajectory_msg_.jerk = use_msg.jerk
+		self.trajectory_msg_.thrust = use_msg.thrust
 
 	# Fetch timestamp
 	def timesync(self, px4_time):
-		self.timestamp = px4_time.timestamp
+		self.timestamp_ = px4_time.timestamp
 
 	# Send a command to Arm the vehicle
 	def arm_vehicle(self):
@@ -126,7 +116,7 @@ class PX4OffboardControl(Node):
 	def publish_offboard_control_mode(self):
 		msg = OffboardControlMode()
 
-		msg.timestamp = self.timestamp
+		msg.timestamp = self.timestamp_
 		msg.position = True
 		msg.velocity = True
 		msg.acceleration = False
@@ -135,29 +125,11 @@ class PX4OffboardControl(Node):
 
 		self.offboard_control_mode_publisher_.publish(msg)
 
-	# Publish trajectory setpoint
-	def publish_trajectory_setpoint(self):
-		msg = TrajectorySetpoint()
-
-		msg.timestamp = self.timestamp
-		msg.x = self.x
-		msg.y = self.y
-		msg.z = self.z
-		msg.yaw = self.yaw
-		msg.vx = self.vx
-		msg.vy = self.vy
-		msg.vz = self.vz
-		msg.acceleration = self.acceleration
-		msg.jerk = self.jerk
-		msg.thrust = self.thrust
-
-		self.trajectory_setpoint_publisher_.publish(msg)
-
 	# Publish vehicle command
 	def publish_vehicle_command(self, command, param1, param2):
 		msg = VehicleCommand()
 
-		msg.timestamp = self.timestamp
+		msg.timestamp = self.timestamp_
 		msg.param1 = float(param1)
 		msg.param2 = float(param2)
 		msg.command = command
