@@ -66,8 +66,8 @@ class PX4OffboardControl(Node):
 
 		# This lands the drone
 		if self.land_ == True:
-			self.trajectory_msg_.z = 0.0
-			self.trajectory_msg_.vz = 0.0
+			self.trajectory_msg_.z = float("NaN")
+			self.trajectory_msg_.vz = 0.2
 
 		# This switches the pixhawk
 		if self.switch_px_ == True and self.px_status_ == False:
