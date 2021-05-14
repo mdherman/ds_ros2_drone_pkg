@@ -80,7 +80,7 @@ class PX4OffboardControl(Node):
 	# System control
 	def drone_control(self, control_msg):
 		self.arm_ = control_msg.arm
-		self.land_land = control_msg.land
+		self.land_ = control_msg.land
 		self.switch_px_ = control_msg.switch_px
 		self.launch_ = control_msg.launch
 
