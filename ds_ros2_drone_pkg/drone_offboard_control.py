@@ -58,7 +58,7 @@ class PX4OffboardControl(Node):
 			self.disarm_vehicle()
 			self.armed_ = False
 			self.launch_ = False
-
+		# This launches the drone
 		if self.launch_ == True self.armed_ == True:
 			self.publish_offboard_control_mode()
 
