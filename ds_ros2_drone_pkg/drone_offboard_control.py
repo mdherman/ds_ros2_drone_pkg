@@ -50,7 +50,7 @@ class PX4OffboardControl(Node):
 		# This arms the drone
 		if self.arm_ == True and self.armed_ == False:
 			self.arm_vehicle()
-			self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+			self.set_offboard_mode()
 			self.armed_ = True
 
 		# This disarms the drone
@@ -100,6 +100,11 @@ class PX4OffboardControl(Node):
 	# Fetch timestamp
 	def timesync(self, px4_time):
 		self.timestamp_ = px4_time.timestamp
+		
+	# Sets mode to offboard control.
+	def set_offboard_mode(self):
+		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
+		self.get_logger().info("Drone set to offboard mode")
 
 	# Send a command to Arm the vehicle
 	def arm_vehicle(self):
