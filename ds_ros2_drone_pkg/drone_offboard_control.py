@@ -59,7 +59,7 @@ class PX4OffboardControl(Node):
 			self.armed_ = False
 			self.launch_ = False
 
-		if self.launch_ == True:
+		if self.launch_ == True self.armed_ == True:
 			self.publish_offboard_control_mode()
 
 		self.trajectory_setpoint_publisher_.publish(self.trajectory_msg_)
