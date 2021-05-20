@@ -52,6 +52,7 @@ class PX4OffboardControl(Node):
 			self.arm_vehicle()
 			self.set_offboard_mode()
 			self.armed_ = True
+			self.land_ = False
 
 		# This disarms the drone
 		if self.arm_ == False and self.armed_ == True:
@@ -63,6 +64,7 @@ class PX4OffboardControl(Node):
 		if self.launch_ == True and self.armed_ == True:
 			self.publish_offboard_control_mode()
 
+		self.trajectory_msg_.timestamp = self.timestamp_
 		self.trajectory_setpoint_publisher_.publish(self.trajectory_msg_)
 
 		# This lands the drone
