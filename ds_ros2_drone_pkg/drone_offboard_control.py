@@ -58,9 +58,9 @@ class PX4OffboardControl(Node):
 			self.disarm_vehicle()
 			self.armed_ = False
 			self.launch_ = False
-			
+
 		# This launches the drone
-		if self.launch_ == True self.armed_ == True:
+		if self.launch_ == True and self.armed_ == True:
 			self.publish_offboard_control_mode()
 
 		self.trajectory_setpoint_publisher_.publish(self.trajectory_msg_)
@@ -101,7 +101,7 @@ class PX4OffboardControl(Node):
 	# Fetch timestamp
 	def timesync(self, px4_time):
 		self.timestamp_ = px4_time.timestamp
-		
+
 	# Sets mode to offboard control.
 	def set_offboard_mode(self):
 		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
