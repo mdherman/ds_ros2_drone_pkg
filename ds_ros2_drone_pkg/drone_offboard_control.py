@@ -35,7 +35,7 @@ class PX4OffboardControl(Node):
 
 		# Flags
 		self.arm_ = False
-		self.land_ = True
+		self.land_ = False
 		self.launch_ = False
 		self.armed_ = False
 		self.switch_px_ = False
@@ -70,6 +70,7 @@ class PX4OffboardControl(Node):
 		if self.land_ == True:
 			self.trajectory_msg_.z = float("NaN")
 			self.trajectory_msg_.vz = 0.2
+			self.land_ = False
 
 		# This switches the pixhawk
 		if self.switch_px_ == True and self.px_status_ == False:
