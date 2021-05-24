@@ -50,19 +50,20 @@ class PX4OffboardControl(Node):
 		# This arms the drone
 		if self.arm_ == True and self.armed_ == False:
 			self.arm_vehicle()
-			self.set_offboard_mode()
 			self.armed_ = True
 
 		# This disarms the drone
 		if self.arm_ == False and self.armed_ == True:
 			self.disarm_vehicle()
+			self.set_stabelized_mode()
 			self.armed_ = False
 			self.launch_ = False
 
 		# This launches the drone
 		if self.launch_ == True and self.armed_ == True:
-			self.publish_offboard_control_mode()
-
+			self.set_offboard_mode()
+			
+		self.publish_offboard_control_mode()
 		self.trajectory_setpoint_publisher_.publish(self.trajectory_msg_)
 
 		# This lands the drone
@@ -106,6 +107,11 @@ class PX4OffboardControl(Node):
 	def set_offboard_mode(self):
 		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 6) # Control modes..
 		self.get_logger().info("Drone set to offboard mode")
+		
+	# Set mode to stabelized control.
+	def set_stabelized_mode(self):
+		self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, 1, 2) # Control modes..
+		self.get_logger().info("Drone set to stabalized mode")
 
 	# Send a command to Arm the vehicle
 	def arm_vehicle(self):
